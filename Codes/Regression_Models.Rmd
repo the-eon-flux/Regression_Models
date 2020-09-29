@@ -1,0 +1,129 @@
+---
+title: "Regression Model"
+author: "Tejus"
+date: "29/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+library(ggplot2)
+library(UsingR)
+library(reshape2)
+```
+
+## Galton Data
+
+Let's look at the marginal (parents disregarding children and children disregarding parents) distributions first. 
+
+```{r }
+data(galton) 
+long <- melt(galton)
+
+# Marginal Histograms of Parents & Child's height
+g <- ggplot(data = long, aes(x=value, fill=variable))
+g <- g + geom_histogram(color = "black", binwidth = 1) + facet_grid(.~variable)
+g
+
+```
+
+## Finding the best prediction of child's height without any other info (Parent's height here)
+
+* Best predictor is the middle
+* One definition for the middle ($\mu$) is, let $Y_i$ be the height of child $i$ for $i = 1, \ldots, n = 928$, then define the middle as the value of $\mu$
+  that minimizes $$\sum_{i=1}^n (Y_i - \mu)^2$$
+* This is physical center of mass of the histogram.
+* You might have guessed that the answer $\mu = \bar Y$.
+
+## Exercise to find the center of mass using manipulate in RStudio
+
+Code `Center_Of_Mass.R`
+
+```{r }
+      mu = 68
+      mse <- mean((galton$child - mu)^2)
+      g <- ggplot(galton, aes(x = child)) + geom_histogram(fill = "salmon", colour = "black", binwidth = 1) + geom_vline(xintercept = mu, size = 3)
+      g <- g + ggtitle(paste("mu - ", mu, ", MSE - ", round(mse,2), sep = ""))
+      g
+      
+```
+
+After finding the mu which minimized the MSE (Mean squared error) we got $$\mu = 68$$. And the mean of thr child data is `r mean(galton$child)`. Thus it's proved that 
+
+## Ordinary least squares (OLS)" : Background
+
+* Workhorse of statistics.
+* **Centering the random variables** by subtracting the mean from each data point. $$\tilde X_i = X_i - \bar X.$$
+
+* The mean of the $\tilde X_i$ is 0.
+* The empirical variance is 
+$$
+S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar X)^2 
+= \frac{1}{n-1} \left( \sum_{i=1}^n X_i^2 - n \bar X ^ 2 \right)
+$$
+
+* **Scaling the data**: Divide every observation by the standard deviation $X_i / s$ the resulting data will have `sd = 1`
+
+* **Normalized data ** : The data defined by
+$$
+Z_i = \frac{X_i - \bar X}{s}
+$$ 
+
+have emperical mean zero & standard deviation 1.
+
+* Normalised data have center at mean & have units equal to standard deviations away from the mean of the original data.
+* Example, a value of 2 from normalized data means that data point was two standard deviations larger than the mean.
+
+### Empirical covariance 
+
+* Consider now when we have pairs of data, $(X_i, Y_i)$.
+* Their empirical covariance is 
+$$
+Cov(X, Y) = 
+\frac{1}{n-1}\sum_{i=1}^n (X_i - \bar X) (Y_i - \bar Y)
+= \frac{1}{n-1}\left( \sum_{i=1}^n X_i Y_i - n \bar X \bar Y\right)
+$$
+* The correlation is defined is
+$$
+Cor(X, Y) = \frac{Cov(X, Y)}{S_x S_y}
+$$
+where $S_x$ and $S_y$ are the estimates of standard deviations 
+for the $X$ observations and $Y$ observations, respectively.
+
+**Covariance has units of X & Y. So when we divide it by standard deviation of both we get an unitless quantity.**
+
+### Facts about correlation
+
+* $Cor(X, Y) = Cor(Y, X)$
+* $-1 \leq Cor(X, Y) \leq 1$
+* $Cor(X,Y) = 1$ and $Cor(X, Y) = -1$ only when the $X$ or $Y$ observations fall perfectly on a positive or negative sloped line, respectively.
+* $Cor(X, Y)$ measures the strength of the linear relationship between the $X$ and $Y$ data, with stronger relationships as $Cor(X,Y)$ heads towards -1 or 1.
+* $Cor(X, Y) = 0$ implies no linear relationship. 
+
+
+## Ordinary least squares (OLS) : Finding the best prediction of child's height with Parent's height.
+
+### Fitting the best line
+* Let $Y_i$ be the $i^{th}$ child's height and $X_i$ be the $i^{th}$ (average over the pair of) parents' heights. 
+
+* Consider finding the best line to predict 
+  * Child's Height = $\beta_0$ + Parent's Height $\beta_1$
+* Use least squares we decide the final best fitting line by minimizing following condition 
+  $$
+  \sum_{i=1}^n \{Y_i - (\beta_0 + \beta_1 X_i)\}^2
+  $$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
