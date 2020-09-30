@@ -29,8 +29,7 @@ g
 ## Finding the best prediction of child's height without any other info (Parent's height here)
 
 * Best predictor is the middle
-* One definition for the middle ($\mu$) is, let $Y_i$ be the height of child $i$ for $i = 1, \ldots, n = 928$, then define the middle as the value of $\mu$
-  that minimizes $$\sum_{i=1}^n (Y_i - \mu)^2$$
+* One definition for the middle ($\mu$) is, if $Y_i$ is the height of child $i$ for $i = 1, \ldots, n = 928$, then the middle is the value of $\mu$ that minimizes $$\sum_{i=1}^n (Y_i - \mu)^2$$
 * This is physical center of mass of the histogram.
 * You might have guessed that the answer $\mu = \bar Y$.
 
@@ -47,42 +46,41 @@ Code `Center_Of_Mass.R`
       
 ```
 
-After finding the mu which minimized the MSE (Mean squared error) we got $$\mu = 68$$. And the mean of thr child data is `r mean(galton$child)`. Thus it's proved that 
+After finding the mu which minimized the MSE (Mean squared error) we got $$\mu = 68$$. And the mean of thr child data is `r mean(galton$child)`. Thus it's proved that the best predictor is the middle.
 
-## Ordinary least squares (OLS)" : Background
+## Ordinary least squares (OLS) : Background
 
 * Workhorse of statistics.
 * **Centering the random variables** by subtracting the mean from each data point. $$\tilde X_i = X_i - \bar X.$$
 
 * The mean of the $\tilde X_i$ is 0.
-* The empirical variance is 
+* **The empirical variance** is 
 $$
 S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar X)^2 
 = \frac{1}{n-1} \left( \sum_{i=1}^n X_i^2 - n \bar X ^ 2 \right)
 $$
 
-* **Scaling the data**: Divide every observation by the standard deviation $X_i / s$ the resulting data will have `sd = 1`
+* **Scaling the data**: Divide every observation by the standard deviation ($X_i / s$) the resulting data will have `sd = 1`
 
 * **Normalized data ** : The data defined by
 $$
 Z_i = \frac{X_i - \bar X}{s}
 $$ 
-
-have emperical mean zero & standard deviation 1.
+    have emperical mean zero & standard deviation 1.
 
 * Normalised data have center at mean & have units equal to standard deviations away from the mean of the original data.
-* Example, a value of 2 from normalized data means that data point was two standard deviations larger than the mean.
+  * Example, a value of 2 from normalized data means that data point was two standard deviations larger than the mean.
 
 ### Empirical covariance 
 
 * Consider now when we have pairs of data, $(X_i, Y_i)$.
-* Their empirical covariance is 
+* Their **empirical covariance** is 
 $$
 Cov(X, Y) = 
 \frac{1}{n-1}\sum_{i=1}^n (X_i - \bar X) (Y_i - \bar Y)
 = \frac{1}{n-1}\left( \sum_{i=1}^n X_i Y_i - n \bar X \bar Y\right)
 $$
-* The correlation is defined is
+* The **correlation** is defined is
 $$
 Cor(X, Y) = \frac{Cov(X, Y)}{S_x S_y}
 $$
@@ -113,11 +111,51 @@ for the $X$ observations and $Y$ observations, respectively.
   $$
 
 
+* **Boils down to estimating the unknowns : ** $\beta_0$ & $\beta_1$
+
+## Results & their consequences : 
+
+***Result**
+  * The least squares model fit to the line $Y = \beta_0 + \beta_1 X$ through the data pairs $(X_i, Y_i)$ with $Y_i$ as the outcome obtains the line $Y = \hat \beta_0 + \hat \beta_1 X$ where
+  $$\hat \beta_1 = Cor(Y, X) \frac{Sd(Y)}{Sd(X)} ~~~ \hat \beta_0 = \bar Y - \hat \beta_1 \bar X$$
+
+* **Consequences of results**
+
+  * $\hat \beta_1$ has the units of $Y / X$, $\hat \beta_0$ has the units of $Y$.
+  * The line passes through the point $(\bar X, \bar Y$) ; Proof > rearrange the eq. of $ \beta_0$ to $ \bar Y = \hat \beta_0 + \hat \beta_1 \bar X$). Once we plug in value of $\bar X$ into the equation of the fitted line we get $\bar Y$ out.
+  * The slope of the regression line with $X$ as the outcome and $Y$ as the predictor is $Cor(Y, X) Sd(X)/ Sd(Y)$. 
+  * The slope is the same one you would get if you centered the data,
+$(X_i - \bar X, Y_i - \bar Y)$, and did regression through the origin.
+  * If you normalized the data, $\{ \frac{X_i - \bar X}{Sd(X)}, \frac{Y_i - \bar Y}{Sd(Y)}\}$, the slope is $Cor(Y, X)$.
 
 
+### Regression in R
 
+**Manually**
 
+```{r}
+y = galton$child
+x = galton$parent
 
+# Slope
+beta1 <- cor(y, x) *(sd(y)/sd(x))
+beta0 <- mean(y) - (beta1*mean(x))
+
+# Coefficients are
+c(beta0, beta1)
+
+# Using lm()
+coef(lm(y~x))
+
+```
+
+### Slope of regression through the origin = Linear regression without 0 intercept if X & Y were mean centered.
+
+yc = y - mean(y)
+xc = x - mean(x)
+
+# Coeeficients
+beta1 <- sum(yc * xc) / sum(xc ^2)
 
 
 
