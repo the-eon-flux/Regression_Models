@@ -56,10 +56,7 @@ After finding the mu which minimized the MSE (Mean squared error) we got $$\mu =
 
 * The mean of the $\tilde X_i$ is 0.
 * **The empirical variance** is 
-$$
-S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar X)^2 
-= \frac{1}{n-1} \left( \sum_{i=1}^n X_i^2 - n \bar X ^ 2 \right)
-$$
+$$ S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar X)^2 = \frac{1}{n-1} \left( \sum_{i=1}^n X_i^2 - n \bar X ^ 2 \right) $$
 
 * **Scaling the data**: Divide every observation by the standard deviation ($X_i / s$) the resulting data will have `sd = 1`
 
@@ -206,7 +203,7 @@ Here is a fundamental question. Why is it that the children of tall parents tend
 
 These phenomena are all examples of so-called **regression to the mean**.
 
-* Regression to the mean, was invented by Francis Galton in the paper “Regression towards mediocrity in hereditary stature” The Journal of the Anthropological Institute of Great Britain and Ireland , Vol. 15, (1886). 
+* Regression to the mean, was invented by Francis Galton in the paper "Regression towards mediocrity in hereditary stat" The Journal of the Anthropological Institute of Great Britain and Ireland , Vol. 15, (1886). 
 * The idea served as a foundation for the discovery of linear regression.
 
 ---
@@ -447,13 +444,9 @@ sqrt(Res_Var) # Manually
 
 ## Summarizing variation
 $$
-\begin{align}
-\sum_{i=1}^n (Y_i - \bar Y)^2 
-& = \sum_{i=1}^n (Y_i - \hat Y_i + \hat Y_i - \bar Y)^2 \\
-& = \sum_{i=1}^n (Y_i - \hat Y_i)^2 + 
+\sum_{i=1}^n (Y_i - \bar Y)^2 = \sum_{i=1}^n (Y_i - \hat Y_i + \hat Y_i - \bar Y)^2  = \sum_{i=1}^n (Y_i - \hat Y_i)^2 + 
 2 \sum_{i=1}^n  (Y_i - \hat Y_i)(\hat Y_i - \bar Y) + 
-\sum_{i=1}^n  (\hat Y_i - \bar Y)^2 \\
-\end{align}
+\sum_{i=1}^n  (\hat Y_i - \bar Y)^2
 $$
 
 ---

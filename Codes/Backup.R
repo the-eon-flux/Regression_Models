@@ -30,4 +30,44 @@ c(beta1, coef(lm(yc~xc))[2])
 
 ' Therefore, slope of regression through the center = slope for mean centered values of x&y'
 
-## Statement 2 : Slope of the Normalized values = Correlation (X,Y)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
