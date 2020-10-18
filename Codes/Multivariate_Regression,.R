@@ -221,31 +221,124 @@ sapply(InsectSprays,class)
    
    "
    
+## Residual diagnostics and variation  
+   library(swirl)
+   swirl()
+      
+   # Outliers may or may not belong in the data.
+   '
+    In order to spot them, R provides various diagnostic plots and measures of influence.
+    The basic technique is to examine the effects of leaving one sample out, as we did in comparing the black and orange
+   '
+   # The influential outlier is in a data frame named out2. 2 cols (y & x)
+   fit <- lm(y ~ x, out2)
    
+   # 1.) The simplest diagnostic plot displays residuals versus fitted values.
+         '
+         Residuals should be uncorrelated with the fit, independent & (almost) identically distributed with mean 0.   
+         '
+         plot(fit, which=1)
+         # We see because of the outlier a linear trend. Now we remove that point & re-fit the model
+         
+         fitno <- lm(y ~ x, out2[-1,])
+         plot(fitno, which = 1)   
+         # Linear trend from the above plot has gone.   
+         
+         # And the measure of influence it had, can simply be calculated by
+         coef(fit) - coef(fitno)
+         
+   # 2.) The function, dfbeta, does the equivalent calculation for every sample in the data.
    
+         View(dfbeta(fit))
+         '
+          When a sample is included in a model, it pulls the regression line closer to itself than that of the model which excludes it. Its residual, the difference between its actual y value and that of a regression line, is thus smaller in magnitude when it is included than when it is omitted.
+          The ratio of these two residuals is therefore small in magnitude for an influential sample. 
+          For a sample which is not influential the ratio would be close to 1. Hence, 
+          1 minus the ratio is a measure of influence, 
+          near 0 for points which are not influential, and 
+          near 1 for points which are.
+          This measure is called influence, sometimes leverage, and sometimes hat value.
+          
+          The ratio"s numerator is the residual of the first sample of the model with outlier.
+          Denominator has to be calculated as when we exclude the outlier, it"s residual is also not calculated.
+          
+          We can easily doing this by predicting value of y for fitno model and subtract it from the actual value.
+          
+         '   
+         
+         resno <- out2[1,"y"] - predict(fitno, out2[1,])
+         # Influence
+         1- resid(fit)[1]/resno
    
+   # 3.) hatvalues: The function, hatvalues, performs for every sample a calculation equivalent to the one you've just done. 
+         head(hatvalues(fit))
    
+      '
+      Residuals of individual samples are sometimes treated as having the same variance, which is estimated as the sample variance of the entire set of residuals.
+      Theoretically, however, residuals of individual samples have different variances and these differences can become large in the presence of outliers.
+      Standardized and Studentized residuals attempt to compensate for this effect in two slightly different ways. Both use hat values.
+      '
    
+   # 4.) Standardised residuals: 
+      # calculate the sample standard deviation of fit's residual, by dividing fit's deviance, i.e., its residual sum of squares, by the residual degrees of freedom and taking the square root.
+      # deviance is sum(resid^2)
+      # degrees of freedom would be n - 2
+      sigma <- sqrt(deviance(fit)/df.residual(fit))
    
+      "
+      Ordinarily we would just divide fit's residual (which has mean 0) by sigma. In the present case we 
+         multiply sigma times sqrt(1-hatvalues(fit)) to estimate standard deviations of individual samples.  
+         Result is called is called the standardized residual.
+      "
+      rstd <- resid(fit)/(sigma * sqrt( 1 - hatvalues(fit)))
+      # rstandard: The function, rstandard, computes the standardized residual which we have just computed.
+      head(cbind(rstd, rstandard(fit)))
+      # A Scale-Location plot shows the square root of standardized residuals against fitted values.
+      plot(fit, which=3)
+      "
+      Most of the diagnostic statistics under discussion were developed because of perceived shortcomings of other diagnostics and because their distributions under a null hypothesis could be characterized. e assumption that residuals are approximately normal is implicit in such characterizations. 
+      Since standardized residuals adjust for individual residual variances, a QQ plot of standardized residuals against normal with constant variance is of interest. Following plot shows that.
+            "
+      plot(fit, which=2)
+      # Outliers are few sd's away from mean
    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
+   # 5.) Studentized residuals, (sometimes called externally Studentized residuals,) estimate the standard deviations of individual residuals using, in addition to individual hat values, the deviance of a model which leaves the associated sample out. We'll illustrate using the outlier. 
+      
+      "
+      calculate the sample standard deviation of fitno's residual by dividing its deviance, by its residual degrees of freedom and taking the square root.
+      "
+      sigma1 <- sqrt(deviance(fitno)/ df.residual(fitno))
+      # Calculate the Studentized residual for the outlier sample by dividing resid(fit)[1] by the product of sigma1 and sqrt(1-hatvalues(fit)[1]).
+      resid(fit)[1] / (sigma1 * sqrt(1-hatvalues(fit)[1]) )
 
+   # rstudent: The function, rstudent, calculates Studentized residuals for each sample using a procedure equivalent to that which we just used for the outlier.     
+      rstudent(fit)[1]
+      
+      
+   # 6.) Cook's distance is the last influence measure. Essentially tells how much a given sample changes a model. 
+      "
+      It's essentially the sum of squared differences between values fitted with and without a particular sample. 
+      It's normalised (divided by) residual sample variance times the number of predictors which is 2 in our case (intercept & x)
+      "
+      
+      # calculating the difference in predicted values between fit and fitno
+      
+      dy <- predict(fitno, out2) - predict(fit, out2)
+      sum(dy^2) / (2 * sigma^2)      
+      
+      # The function, cooks.distance, will calculate Cook's distance for each sample. 
+      plot(fit, which=5)
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
