@@ -44,7 +44,7 @@ cov(efit$residuals, attenu$dist)
 
 l_nor <- lm(gch_nor~ gpa_nor)
 
-# residual variation
+# Residual variation
 
 fit <- lm(child ~ parent, galton)
 
@@ -60,17 +60,4 @@ sRes <-  deviance(fit)
 1 - sRes/ sTot
       
 cor(galton$child, galton$parent)^2
-
-
-
-
-
-
-
-
-
-
-
-
-
 
