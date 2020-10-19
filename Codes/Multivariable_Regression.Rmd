@@ -71,12 +71,14 @@ follows a $T$ distribution with $n-p$ degrees of freedom.
 
 ## Variance inflation and Factors
 
+### Some background
+
 * In modeling, our interest lies in parsimonious, interpretable representations of the data that enhance our understanding of the phenomena under study.
 * Omitting variables results in bias in the coefficients of interest - unless their regressors are uncorrelated with the omitted ones.
 * On the other hand, including any new variables increases (actual, not estimated) standard errors of other regressors. (So we don't want to idly throw variables into the model. )
-* This lesson is about the 2nd problem, **Variance Inflation**.
+* First let us look at the 2nd problem, **Variance Inflation**.
 
-### First Simulation
+### 1.) A variance inflation factor (VIF)
 
 * As you can see from the below code y depends on x variable only plus some random noise.
 * We will be looking at the coefficient of x1 as we keep adding new regressors to the model.
@@ -163,11 +165,11 @@ print(rgp2())
 * In a real case, we have only one set of coefficients and we depend on theoretical estimates. However, theoretical estimates contain an unknown constant of proportionality. We therefore depend on ratios of theoretical estimates called **Variance Inflation Factors, or VIFs**.
 
 
-## A variance inflation factor (VIF)
+#### Definition
 
 * **A variance inflation factor (VIF) is a ratio of estimated variances, the variance due to including the ith regressor, divided by that due to including a corresponding ideal regressor which is uncorrelated with the others.**
 
-* You can also say that VIF describes the increase in the variance of a coefficient due to the correlation of its regressor with the other regressors.
+* You can also say that VIF describes the increase in the variance of a coefficient of the other correlated regressors.
 
 * Let's use the swiss dataset and see that.
 
@@ -204,7 +206,7 @@ vif(mdl2)
 
 * Note that omitting Examination has had almost no effect the VIF for Infant Mortality. 
 
-## Review
+#### Review
 
 * VIF is the square of standard error inflation.
 
@@ -212,7 +214,168 @@ vif(mdl2)
 
 * The problems of variance inflation and bias due to excluded regressors both involve correlated regressors. However there are methods, such as factor analysis or principal componenent analysis, which can convert regressors to an equivalent uncorrelated set. Keep in mind that using converted regressors may make interpretation difficult.
 
-## Overfitting & underfitting
+### 2.) Overfitting & underfitting
+
+* Let us look at the effect of omitted variables and discuss the use of ANOVA to construct parsimonious, interpretable representations of the data.
+
+* First let's see how omitting a correlated regressor can bias estimates of a coefficient.
+
+* Look at the following simulation function `simbias()`
+
+```{r simBias}
+simbias <- function(seed=8765){
+  # The default seed guarantees a nice histogram. This is the only
+  # reason that accepting the default, x1c <- simbias(), is required in the lesson. 
+  # The effect will be evident with other seeds as well.
+  set.seed(seed) 
+  temp <- rnorm(100)
+  # Point A
+  x1 <- (temp + rnorm(100))/sqrt(2)
+  x2 <- (temp + rnorm(100))/sqrt(2)
+  x3 <- rnorm(100)
+  # Function to simulate regression of y on 2 variables.
+  f <- function(k){
+    # Point B
+    y <- x1 + x2 + x3 + .3*rnorm(100)
+    # Point C
+    c(lm(y ~ x1 + x2)$coef[2],
+       lm(y ~ x1 + x3)$coef[2])
+  }
+  # Point D
+  sapply(1:150, f)
+}
+
+```
+
+* We have 2 vars correlated `x1 & x2` and notice the Fn within `simbias()` which simulates `150` y variables and returns the coef of x1 for the 2 models :
+  # lm(y~x1 + x2) `Our correlated variables` &
+  # lm(y ~ x1 + x3) `Uncorrelated variables`
+
+* As you can see from the `point B` comment the actual coef of `x1` is `1`.
+
+* Results retuned from simulation matrix are as a 2x150 matrix.  
+
+* The first row of this matrix contains independent estimates of x1's coefficient in the case that x3, the regressor uncorrelated with x1, is omitted.
+
+* The second row contains estimates of x1's coefficient when the correlated regressor, x2, is omitted.
+
+* Let's run the code and see the results.
+
+```{r }
+x1c <- simbias()
+```
+
+* We know as we have omiited the correlated variable, we would expect the mean estimate of x1c's in 2nd row of results **to be farther from 1** than the mean of x1c's in first row.  
+
+```{r}
+apply(x1c, 1, mean)
+```
+
+* As expected the 2nd value is greater than the first. Let's plot it and see the differences.  
+
+```{r}
+
+# Plot histograms illustrating bias in estimates of a regressor
+# coefficient 1) when an uncorrelated regressor is missing and
+# 2) when a correlated regressor is missing.
+x1hist <- function(x1c){
+  p1 <- hist(x1c[1,], plot=FALSE)
+  p2 <- hist(x1c[2,], plot=FALSE)
+  yrange <- c(0, max(p1$counts, p2$counts))
+  plot(p1, col=rgb(0,0,1,1/4), xlim=range(x1c), ylim=yrange, xlab="Estimated coefficient of x1",
+        main="Bias Effect of Omitted Regressor")
+  plot(p2, col=rgb(1,0,0,1/4), xlim=range(x1c), ylim=yrange, add=TRUE)
+  legend(1.1, 40, c("Uncorrelated regressor, x3, omitted", "Correlated regressor, x2, omitted"),
+         fill=c(rgb(0,0,1,1/4), rgb(1,0,0,1/4)))
+}
+x1hist(x1c)
+
+```
+
+* Histograms of estimates from x1c's first row (blue) and second row (red) are shown. **Estimates from the second row are clearly more than two standard deviations from the correct value of 1, and the bias due to omitting the correlated regressor is evident**.
+
+* Adding even irrelevant regressors can cause a model to tend toward a perfect fit. We illustrate this by adding random regressors to the swiss data and regressing on progressively more of them. 
+
+* **As the number of regressors approaches the number of data points (47), the residual sum of squares, also known as the deviance, approaches 0**.
+
+```{r Bogus}
+# Illustrate the effect of bogus regressors on residual squared error.
+bogus <- function(){
+  temp <- swiss
+  # Add 41 columns of random regressors to a copy of the swiss data.
+  for(n in 1:41){temp[,paste0("random",n)] <- rnorm(nrow(temp))}
+  # Define a function to compute the deviance of Fertility regressed
+  # on all regressors up to column n. The function, deviance(model), computes
+  # the residual sum of squares of the model given as its argument.
+  f <- function(n){deviance(lm(Fertility ~ ., temp[,1:n]))}
+  # Apply f to data from n=6, i.e., the legitimate regressors,
+  # through n=47, i.e., a full complement of bogus regressors.
+  rss <- sapply(6:47, f)
+  # Display result.
+  plot(0:41, rss, xlab="Number of bogus regressors.", ylab="Residual squared error.",
+       main="Residual Squared Error for Swiss Data\nUsing Irrelevant (Bogus) Regressors",
+       pch=21, bg='red')
+}
+bogus()
+
+
+```
+
+* In the figure, adding random regressors decreased deviance, but we would be mistaken to believe that such decreases are significant.
+
+* To assess significance, we should take into account that adding regressors reduces residual degrees of freedom.
+
+* Analysis of variance (ANOVA) is a useful way to quantify the significance of additional regressors. To exemplify its use, we will use the swiss data.
+
+```{r ANOVA}
+
+# regress Fertility on Agriculture
+fit1 <- lm(Fertility ~ Agriculture, swiss)
+
+# regress Fertility on Agriculture & 2 additional params Examination & Education
+fit3 <- lm(Fertility ~ Agriculture + Examination + Education , swiss)
+
+# ANOVA
+anova(fit1, fit3)
+```
+
+* We have used anova to assess the significance of the two added regressors. **The null hypothesis is that the added regressors are not significant.**
+
+* The `***` indicates that the null hypothesis is rejected at the 0.001 level, so at least one of the two additional regressors is significant.
+
+* Rejection is based on a right-tailed F test, Pr(>F), applied to an F value.
+
+*  An F statistic is a ratio of two sums of squares divided by their respective degrees of freedom. If the two scaled sums are independent and centrally chi-squared distributed with the same variance, the statistic will have an F distribution with parameters given by the two degrees of freedom. In our case, the two sums are residual sums of squares which, as we know, have mean zero hence are centrally chi-squared provided the residuals themselves are normally distributed. The two relevant sums are given in the RSS (Residual Sum of Squares) column of the table.
+
+* R's function, deviance(model), calculates the residual sum of squares (RSS in ANOVA result), also known as the deviance, of the linear model given as its argument.
+
+#### F value (ANOVA) calculation
+
+* Denominator : fit3's residual sum of squares / fit3's degrees of freedom.
+  # Df : subtracting 4, the number of fit3's predictors (the 3 named and the intercept,) from 47
+  # `d <- deviance(fit3)/(47 - 3 - 1)` 
+
+* Numerator : The numerator is the difference, deviance(fit1)-deviance(fit3), divided by the difference in the residual degrees of freedom of fit1 and fit3, namely 2.
+  # `n <- (deviance(fit1)-deviance(fit3)) / 2`
+
+* Ratio now `n/d` is your F statistic.
+
+#### P value calculation
+
+* Probability that a value of `n/d` or larger would be drawn from an F distribution which has parameters 2 and 43. Given by `4.407e-07 in the column labeled Pr(>F)` in ANOVA table.
+
+* `pf(n/d, 2, 43,lower.tail=FALSE)`; Same very small p value, so we are confident that fit3 is significantly better than fit1, with one caveat:
+  # analysis of variance is sensitive to its assumption that model residuals are approximately normal. If they are not, we could get a small p-value for that reason.
+  # The Shapiro-Wilk test is quick and easy in R, Normality is its null hypothesis.
+  # `shapiro.test(fit3$residuals)` Since p-value is large; We accept the H0 hypothesis; supporting confidence in our ANOVA. 
+
+## Review
+
+* Omitting a correlated regressor can bias estimation of the coefficient of certain other regressors.
+
+* Including more regressors will reduce a model's residual sum of squares, even if the new regressors are irrelevant. 
+
+* When adding regressors, the reduction in residual sums of squares should be tested for significance above and beyond that of reducing residual degrees of freedom. R's anova() function uses an F-test for this purpose. Before that the **model residuals should be tested for normality.**
 
 
 
