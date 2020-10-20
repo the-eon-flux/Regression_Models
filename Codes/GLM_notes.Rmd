@@ -1,5 +1,5 @@
 ---
-title: "GLM's"
+title: "GLM Course Notes"
 author: "Tejus"
 date: "19/10/2020"
 output: html_document
@@ -9,28 +9,352 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Generalized linear models (GLMs)
 
-Generalized linear models (GLMs) were a great advance in statistical modeling. The original manuscript with the GLM framework was from Nelder and Wedderburn in 1972. in the Journal of the Royal Statistical Society. The McCullagh and Nelder book1 is the famous standard treatise on the subject.
+### Limitations of linear models
 
-Recall linear models. Linear models are the most useful applied statistical technique. However, they are not without their limitations. Additive response models don’t make much sense if the response is discrete, or strictly positive. Additive error models often don’t make sense, for example, if the outcome has to be positive. Transformations, such as taking a cube root of a count outcome, are often hard to interpret.In addition, there’s value in modeling the data on the scale that it was collected. Particularly interpretable transformations, natural logarithms in specific, aren’t applicable for negative or zero values.
+* Additive response models don't make much sense if the response is discrete, or stricly positive.
+* Additive error models often don't make sense, for example if the outcome has to be positive. 
+* Transformations are often hard to interpret. 
+    * There's value in modeling the data on the scale that it was collected.
+    * Particularly interpetable transformations, natural logarithms in specific,   aren't applicable for negative or zero values.
 
-The generalized linear model is family of models that includes linear models. By extending the family, it handles many of the issues with linear models, but at the expense of some complexity and loss of some of the mathematical tidiness. A GLM involves three components : 
+### GLMs Introduction
 
-* An exponential family model for the response.
-* 
-*
+* Generalized linear models (GLMs) were a great advance in statistical modeling.  The McCullagh and Nelder book1 is the famous standard treatise on the subject.
 
-```{r cars}
+* The generalized linear model is family of models that includes linear models. By extending the family, it handles many of the issues with linear models, but at the expense of some complexity and loss of some of the mathematical tidiness. 
+
+* A GLM involves three components : 
+
+      * An exponential family model for the response.
+      * A systematic component via a linear predictor.
+      * A link function that connects the means of the response to the linear predictor.
+
+
+---
+### Example, linear models
+* Assume that $Y_i \sim N(\mu_i, \sigma^2)$ (the Gaussian distribution is an exponential family distribution.)
+* Define the linear predictor to be $\eta_i = \sum_{k=1}^p X_{ik} \beta_k$.
+* The link function as $g$ so that $g(\mu) = \eta$.
+  * For linear models $g(\mu) = \mu$ so that $\mu_i = \eta_i$
+* This yields the same likelihood model as our additive error Gaussian linear model
+$$
+Y_i = \sum_{k=1}^p X_{ik} \beta_k + \epsilon_{i}
+$$
+where $\epsilon_i \stackrel{iid}{\sim} N(0, \sigma^2)$
+
+---
+### Example, logistic regression
+* Assume that $Y_i \sim Bernoulli(\mu_i)$ so that $E[Y_i] = \mu_i$ where $0\leq \mu_i \leq 1$.
+* Linear predictor $\eta_i = \sum_{k=1}^p X_{ik} \beta_k$
+* Link function 
+$g(\mu) = \eta = \log\left( \frac{\mu}{1 - \mu}\right)$
+$g$ is the (natural) log odds, referred to as the **logit**.
+* Note then we can invert the logit function as
+$$
+\mu_i = \frac{\exp(\eta_i)}{1 + \exp(\eta_i)} ~~~\mbox{and}~~~
+1 - \mu_i = \frac{1}{1 + \exp(\eta_i)}
+$$
+Thus the likelihood is
+$$
+\prod_{i=1}^n \mu_i^{y_i} (1 - \mu_i)^{1-y_i}
+= \exp\left(\sum_{i=1}^n y_i \eta_i \right)
+\prod_{i=1}^n (1 + \eta_i)^{-1}
+$$
+
+---
+### Example, Poisson regression
+* Assume that $Y_i \sim Poisson(\mu_i)$ so that $E[Y_i] = \mu_i$ where $0\leq \mu_i$
+* Linear predictor $\eta_i = \sum_{k=1}^p X_{ik} \beta_k$
+* Link function 
+$g(\mu) = \eta = \log(\mu)$
+* Recall that $e^x$ is the inverse of $\log(x)$ so that 
+$$
+\mu_i = e^{\eta_i}
+$$
+Thus, the likelihood is
+$$
+\prod_{i=1}^n (y_i !)^{-1} \mu_i^{y_i}e^{-\mu_i}
+\propto \exp\left(\sum_{i=1}^n y_i \eta_i - \sum_{i=1}^n \mu_i\right)
+$$
+
+---
+### Some things to note
+* In each case, the only way in which the likelihood depends on the data is through  
+$\sum_{i=1}^n y_i \eta_i = \sum_{i=1}^n y_i\sum_{k=1}^p X_{ik} \beta_k = \sum_{k=1}^p \beta_k\sum_{i=1}^n X_{ik} y_i$  
+Thus if we don't need the full data, only $\sum_{i=1}^n X_{ik} y_i$. This simplification is a consequence of chosing so-called 'canonical' link functions.
+* (This has to be derived). All models acheive their maximum at the root of the so called normal equations
+$$
+0=\sum_{i=1}^n \frac{(Y_i - \mu_i)}{Var(Y_i)}W_i
+$$
+where $W_i$ are the derivative of the inverse of the link function.
+
+---
+### About variances
+$0=\sum_{i=1}^n \frac{(Y_i - \mu_i)}{Var(Y_i)}W_i$
+* For the linear model $Var(Y_i) = \sigma^2$ is constant.
+* For Bernoulli case $Var(Y_i) = \mu_i (1 - \mu_i)$
+* For the Poisson case $Var(Y_i) = \mu_i$. 
+* In the latter cases, it is often relevant to have **a more flexible variance** model, even if it doesn't correspond to an actual likelihood
+$0=\sum_{i=1}^n \frac{(Y_i - \mu_i)}{\phi \mu_i (1 - \mu_i ) } W_i ~~~\mbox{and}~~~ 0=\sum_{i=1}^n \frac{(Y_i - \mu_i)}{\phi \mu_i} W_i$  
+
+* These are called **'quasi-likelihood' normal equations **
+
+---
+
+## Binary Outcomes & Logistic Regression.
+
+      * Frequently we care about outcomes that have two values
+        * Alive/dead
+        * Win/loss
+        * Success/Failure
+        * etc
+      * Called binary, Bernoulli or 0/1 outcomes 
+      * Collection of exchangeable binary outcomes for the same covariate data are called binomial outcomes.
+
+### Odds and ends  
+      * The normal equations have to be solved iteratively. Resulting in 
+      $\hat \beta_k$ and, if included, $\hat \phi$.
+      * Predicted linear predictor responses can be obtained as $\hat \eta = \sum_{k=1}^p X_k \hat \beta_k$
+      * Predicted mean responses as $\hat \mu = g^{-1}(\hat \eta)$
+      * Coefficients are interpretted as  
+      $g(E[Y | X_k = x_k + 1, X_{\sim k} = x_{\sim k}]) - g(E[Y | X_k = x_k, X_{\sim k}=x_{\sim k}]) = \beta_k$  
+            or the change in the link function of the expected response per unit change in $X_k$ holding other regressors constant.
+      * Variations on Newon/Raphson's algorithm are used to do it.
+      * Asymptotics are used for inference usually. 
+      * Many of the ideas from linear models can be brought over to GLMs.
+
+
+#### Objectives
+
+* Learning to use glm() to model a process with a binary outcome and a continuous predictor.
+* Interpret glm coefficients, and find confidence intervals.
+
+* **Odds** revisited :  
+      * The Baltimore Ravens are a team in the American Football League. In post season (championship) play they win about 2/3 of their games   
+      * In other words, they win about twice as often as they lose. If I wanted to bet on them, I would have to offer 2-to-1 odds--if they lost I would pay you 2\$ , but if they won you would pay me only 1\$  
+      * That way, in the long run over many bets, we'd both expect to win as much money as we'd lost  
+      
+* If `p` is the probability of an event, the associated odds are `p/(1-p)`.
+
+*  Now suppose we want to see how the Ravens' odds depends on their offense. In other words, we want to model how p, or some function of it, depends on how many points the Ravens are able to score. 
+
+* we can't observe p, we can only observe wins, losses, and the associated scores.
+
+```{r Load_RavensData, cache=TRUE}
+
+load("./Data/ravensData.rda")
+head(ravensData)
+boxplot(ravensData) # W & L
+```
+
+* We can see that the Ravens tend to win more when they score more points. In fact, about 3/4 of their losses are at or below a certain score (23) and about 3/4 of their wins are at or above it.
+
+* There were 9 games in which the Ravens scored 23 points or less. They won 4 of these games, so we might guess their probability of winning, given that they score 23 points or less, is about `1/2`.
+
+* There were 11 games in which the Ravens scored 24 points or more. They won all but one of these.
+
+```{r echo=FALSE}
+View(t(ravensData))
+```
+
+* We see a fairly rapid transition in the Ravens' win/loss record between 23 and 28 points. At **23 points and below they win about half their games**, **between 24 and 28 points they win 3 of 4**, and **above 28 points they win them all**. From this, we get a very crude idea of the correspondence between points scored and the probability of a win.
+
+* **A generalized linear model supposes that the log odds of a win depend linearly on the score. That is, $log(p/(1-p)) = b_0 + b_1*score$.**
+
+* **The link function, $log(p/(1-p))$, is called the logit, & the process of finding the best b0 and b1, is called logistic regression.**
+
+* **The "best" b0 and b1 are those which maximize the likelihood of the actual  win/loss record.**
+
+* Based on the score of a game, b0 and b1 give us a log odds, which we can convert to a probability, p, of a win. We would like p to be high for the scores of winning games, and low for the scores of losses.
+
+```{r GLM_Ravens}
+mdl <- glm(ravenWinNum ~ ravenScore, family=binomial, data=ravensData)
+plot(ravenData$ravenScore,mdl$fitted,pch=19,col="blue",xlab="Score",ylab="Prob Ravens Win")
+```
+
+#### Results :
+
+* The probabilities estimated by logistic regression using glm() are on y-axis. It's more reasonable than our crude estimate.
+
+* It increases smoothly with score, so we can make folowing theories :
+      * Estimates that 15 points give the Ravens a 50% chance of winning,
+      * 28  points give them an 80% chance &
+      * 55 points make a win very likely (98%) but not absolutely certain.
+
+* The model is less credible at scores lower than 9 as there is no data in that region. We can use R's predict() function to see the model's estimates for lower scores. 
+
+```{r Raven_Predict}
+lodds <- predict(mdl, data.frame(ravenScore=c(0, 3, 6)))
+
+# Convert log odds to probabilities
+exp(lodds)/(1+exp(lodds))
 
 ```
 
-## Including Plots
+* As it turns out, though, the model is not that sure of itself as we can see that the Std. Error of the estimated coefficients within 2 standard errors of zero.
 
-You can also embed plots, for example:
+* If `b0 + b1*score` estimates log odds, then `exp(b0 + b1*score) =exp(b0)exp(b1*score)` estimates odds.
 
-```{r pressure, echo=FALSE}
+* Thus exp(b0) is the odds of winning with a score of 0 & exp(b1) is the factor by which the odds of winning increase with every point scored.  
+
+* In our case exp(b1) = exp(0.10658) = 1.11. In other words, the odds of winning increase by 11% for each point scored. However, the coefficients have relatively large standard errors.
+
+* Get the confidence interval using `exp(confint(mdl))`
+
+```{r }
+exp(confint(mdl))
+```
+
+* The lower confidence bound on exp(b1) suggests that the odds of winning would decrease slightly with every additional point scored. This is obviously unrealistic. Of course, confidence intervals are based on large sample assumptions and our sample consists of only 20 games. In fact, the GLM version of analysis of variance will show that if we ignore scores altogether, we don't do much worse.
+
+
+* If an additional predictor significantly reduces the residual's variance, the  predictor is deemed important. Deviance extends this idea to generalized linear regression, using (negative) log likelihoods in place of variance.
+
+```{r }
+anova(mdl)
+```
+
+* The value 3.5398, labeled as the deviance of ravenScore, is actually the difference between the deviance of our model, which includes a slope, and that of a model which includes only an intercept, b0.
+
+* This value is centrally chi-square distributed (for large samples) with 1 degree of freedom (2 parameters minus 1 parameter, or equivalently 19-18.)
+
+* The $H_0$ hypothesis is that the coefficient of ravenScore is zero. To confidently reject this hypothesis, we would want 3.5398 to be larger than the 95th percentile of chi-square distribution with one degree of freedom.
+
+* `r qchisq(0.95, 1)` is the threshold & `3.5398` is close but < 95th percentile hence would be regarded as consistent with the null hypothesis at the conventional 5% level.
+
+* In other words, ravenScore adds very little to a model which just guesses that the Ravens win with probability 70% (their actual record that season) or odds 7 to 3 is almost as good.
+
+--- 
+
+## Count Outcomes & Poisson GLMs
+
+### Key Ideas
+
+* Many data take the form of counts
+  * Calls to a call center
+  * Number of flu cases in an area
+  * Number of cars that cross a bridge
+* Data may also be in the form of rates
+  * Percent of children passing a test
+  * Percent of hits to a website from a country
+* Linear regression with transformation is an option
+
+---
+
+#### Poisson distribution
+- The Poisson distribution is a useful model for counts and rates
+- Here a rate is count per some monitoring time
+- Some examples uses of the Poisson distribution
+    - Modeling web traffic hits
+    - Incidence rates
+    - Approximating binomial probabilities with small $p$ and large $n$
+    - Analyzing contigency table data
+
+---
+#### The Poisson mass function
+
+- Characterized by a single parameter, the expected rate of occurrence, which is usually called $\lambda$
+
+- $X \sim Poisson(t\lambda)$ if
+$$
+P(X = x) = \frac{(t\lambda)^x e^{-t\lambda}}{x!}
+$$
+For $x = 0, 1, \ldots$.
+- The mean of the Poisson is $E[X] = t\lambda$, thus $E[X / t] = \lambda$
+- The variance of the Poisson is $Var(X) = t\lambda$.
+      * The variance of a Poisson process has the same value as its mean, lambda
+- The Poisson tends to a normal as $t\lambda$ gets large.
+
+---
+
+- We will use Poisson regression to analyze daily visits to a web site as the web site's popularity grows, and to analyze the percent of visits which are due to references from a different site.
+
+- In our case, lambda will be expected visits per day. As the website becomes more popular, lambda will grow. 
+
+- In other words, our lambda will depend on time & we use Poisson regression to model this dependence.
+
+- Illustrating variance & mean are equal. 
+
+```{r Pois_Mean_Var}
+n = 1000
+var(rpois(n, 50))
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+- The sample variance won't be exactly equal to the theoretical value, ofcourse, but it will be fairly close.
+
+- Illustrating for large lambda, a Poisson distribution is well approximated by a normal.
+
+```{r simPois,fig.height=4,fig.width=8, cache=TRUE}
+par(mfrow = c(1, 3))
+plot(0 : 10, dpois(0 : 10, lambda = 2), type = "h", frame = FALSE)
+plot(0 : 20, dpois(0 : 20, lambda = 10), type = "h", frame = FALSE)
+plot(0 : 200, dpois(0 : 200, lambda = 100), type = "h", frame = FALSE) 
+```
+
+- It shows progression from a sparse, asymetric, Poisson probability mass function on the left, to a dense, bell-shaped curve on the right as lambda varies from 2 to 100.
+
+- In a Poisson regression, the log of lambda is assumed to be a linear function of the predictors.
+
+- In our case : log of $log(\lambda) = b_0 + b_1*{date}$, which implies that the  $\lambda$ (average number of hits per day) is given by $\lambda = exp(b0)*exp(b1)^{date}$
+
+- Exponential growth is also suggested by the smooth, black curve drawn though the data.
+
+- Thus exp(b1) would represent the percentage by which visits grow per day.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
