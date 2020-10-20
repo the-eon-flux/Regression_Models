@@ -146,7 +146,7 @@ $0=\sum_{i=1}^n \frac{(Y_i - \mu_i)}{\phi \mu_i (1 - \mu_i ) } W_i ~~~\mbox{and}
 
 load("./Data/ravensData.rda")
 head(ravensData)
-boxplot(ravensData) # W & L
+boxplot( ravenScore ~ ravenWin, ravensData, horizontal = T ) # W & L
 ```
 
 * We can see that the Ravens tend to win more when they score more points. In fact, about 3/4 of their losses are at or below a certain score (23) and about 3/4 of their wins are at or above it.
