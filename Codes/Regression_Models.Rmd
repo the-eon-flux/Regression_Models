@@ -12,9 +12,11 @@ library(reshape2)
 library(dplyr)
 ```
 
-## Galton Data
+## Prediction of Child's height
 
-Let's look at the marginal (parents disregarding children and children disregarding parents) distributions first. 
+* Suppose we want to predict the children's height using parent's height. We can train a model using **Galton data**.
+
+* Let's look at the marginal (parents disregarding children and children disregarding parents) distributions first. 
 
 ```{r }
 data(galton) 
@@ -85,7 +87,7 @@ $$
 where $S_x$ and $S_y$ are the estimates of standard deviations 
 for the $X$ observations and $Y$ observations, respectively.
 
-**Covariance has units of X & Y. So when we divide it by standard deviation of both we get an unitless quantity.**
+**Covariance has units of X & Y. So when we divide it by standard deviation of both we get an unitless quantity as Correlation.**
 
 ### Facts about correlation
 
@@ -120,11 +122,12 @@ for the $X$ observations and $Y$ observations, respectively.
 * **Consequences of results**
 
   * $\hat \beta_1$ has the units of $Y / X$, $\hat \beta_0$ has the units of $Y$.
-  * The line passes through the point $(\bar X, \bar Y$) ; Proof > rearrange the eq. of 
-  $ \beta_0$ to $ \bar Y = \hat \beta_0 + \hat \beta_1 \bar X$). Once we plug in value of $\bar X$ into the equation of the fitted line we get $\bar Y$ out.
+  * The line passes through the point $(\bar X, \bar Y$) ; 
+    * Proof; Rearrange the eq. of $\beta_0$ to $\bar Y = \hat \beta_0 + \hat \beta_1 \bar X$). 
+    * Once we plug in value of $\bar X$ into the equation of the fitted line we get $\bar Y$ out.
   * The slope of the regression line with $X$ as the outcome and $Y$ as the predictor is $Cor(Y, X) Sd(X)/ Sd(Y)$. 
-  * The slope is the same one you would get if you centered the data,
-$(X_i - \bar X, Y_i - \bar Y)$, and did regression through the origin.
+  * The slope of regression with the intercept (original data) is the equal to the slope you would get if you **centered the data (removed the intercept)**,
+$(X_i - \bar X, Y_i - \bar Y)$, and **did regression through the origin**.
   * If you normalized the data, $\{ \frac{X_i - \bar X}{Sd(X)}, \frac{Y_i - \bar Y}{Sd(Y)}\}$, the slope is $Cor(Y, X)$.
 
 
@@ -148,29 +151,24 @@ coef(lm(y~x))
 
 ```
 
-### Statement 1 : Slope of linear regression for mean centered values = Slope of regression through the origin
+### Statement 1 : Slope of linear regression for mean centered values = Slope of regression through the origin for mean centered values
 
 ```{r RegressionThroughOrigin}
 # Regression through the origin**
 xc = x - mean(x)
 yc = y - mean(y)
 
-# Slope of regression through the origin 
+# Slope of regression through the origin for mean centered data
 beta1 <- sum(yc *xc) / sum(xc^2) 
-
-# Or just beta1 <- coef(lm(yc~xc-1))
+  # Or just beta1 <- coef(lm(yc~xc-1))
 
 # results
 c(beta1, coef(lm(yc~xc))[2])
-
 ```
-
-**Therefore, slope of regression through the center = slope for mean centered values of x&y**
 
 ### Statement 2 : Slope of the Normalized values = Correlation (X,Y)
 
 ```{r Regression_NormalisedValues}
-
 xn = (x - mean(x)) / sd(x)
 yn = (y - mean(y)) / sd(y)
 
@@ -179,13 +177,11 @@ beta1 = cor(yn,xn) * (sd(xn)/ sd(yn))
 
 # results
 c(beta1, cor(xn, yn), cor(y,x))
-
 ```
 
 ### Plotting a regression line 
 
 ```{r Plotting}
-
 freqData <- as.data.frame(table(galton$child, galton$parent))
 names(freqData) <- c("child", "parent", "freq")
 freqData$child <- as.numeric(as.character(freqData$child))
@@ -219,21 +215,25 @@ $$
 Note : By adding the iid Gaussian errors we make it a statistical model.  
 
 * Here the $\epsilon_{i}$ are assumed iid $N(0, \sigma^2)$. 
-* Expected value of response given the particular values of regressor is given by, $E[Y_i ~|~ X_i = x_i] = \mu_i = \beta_0 + \beta_1 x_i$
+* Expected values of response given the particular values of regressor is given by, $E[Y_i ~|~ X_i = x_i] = \mu_i = \beta_0 + \beta_1 x_i$
 * Variance of the response at any particular value of regressor, $Var(Y_i ~|~ X_i = x_i) = \sigma^2$.
 
 Note : This expected value and variance is around the regression line (for each of the response variable) and not for the whole response variable $Y_i$ as such. Imagine each data point coming from it's own distribution with expected value & variance parameters defined by above formulas.  
 
 ### Interpreting regression coefficients for statistical models. 
 
-**Intercept**
+* Interpretation of the coefficients is an important thing to consider if the researcher is interested to understand the mechanism of the system under study.
 
-Since response $Y$ at $X = 0$ is not meaningful in all cases, we shift the values of X by some constant $a$.  
-$$Y_i = \beta_0 + \beta_1 X_i + \epsilon_i$$ $$ = \beta_0 + a \beta_1 + \beta_1(X_i - a) + \epsilon_i $$  $$ = \tilde \beta_0 + \beta_1 X_i + \epsilon_i $$
-Thus we can see that if we shift our regressor by a constant, we get a new regression line, with the same slope but with different intercept. Very common constant is $$\bar X$$.  
-Your intercept will be interpreted as Expected value of response at the average values of X's.
+--- 
 
-**Slope**
+#### Intercept
+
+* Since response $Y$ at $X = 0$ is not meaningful in all cases, we shift the values of X by some constant $a$.  
+$$Y_i = \beta_0 + \beta_1 X_i + \epsilon_i$$ $$ = \beta_0 + a \beta_1 + \beta_1(X_i - a) + \epsilon_i $$  $$ = \tilde \beta_0 + \beta_1 X_i + \epsilon_i$$
+* Thus we can see that if we shift our regressor by a constant, we get a new regression line, with the same slope but with different intercept. Very common constant is $\bar X$.  
+* Your intercept will be then **interpreted as Expected value of response at the average values of X's**.
+
+#### Slope
 
 * $\beta_1$ is the expected change in response for a 1 unit change in the predictor 
   $$
@@ -248,17 +248,17 @@ Y_i = \beta_0 + \beta_1 X_i + \epsilon_i
 = \beta_0 + \tilde \beta_1 (X_i a) + \epsilon_i
 $$
 
-In other words multiplication of a regression variable $X$ by factor 'a' results in dividing the coeff by factor 'a'
+**In other words multiplication of a regression variable $X$ by factor 'a' results in dividing the coeff by factor 'a'**
+
+* This is especially usefull in changing the scale of data and interpreting the new coefficients.
 
 
 ### Using regression coeficients for prediction
-* If we would like to guess the outcome at a particular value of the predictor, say $X$, the regression model guesses $$\hat \beta_0 + \hat \beta_1 X$$
+* If we would like to guess the outcome at a particular value of the predictor, say $X$, the regression model guesses $\hat \beta_0 + \hat \beta_1 X$
 
-* Note that at the observed value of $X$s, we obtain the predictions
-  $$
-  \hat \mu_i = \hat Y_i = \hat \beta_0 + \hat \beta_1 X_i
-  $$
-* Remember that least squares minimizes $$ \sum_{i=1}^n (Y_i - \mu_i) $$ for $\mu_i$ expressed as points on a line.  
+* Note that at the observed value of $X$s, we obtain the predictions $\hat \mu_i = \hat Y_i = \hat \beta_0 + \hat \beta_1 X_i$
+
+* Remember that least squares minimizes $\sum_{i=1}^n (Y_i - \mu_i)$ for $\mu_i$ expressed as points on a line.  
 
 ---
 
@@ -307,6 +307,7 @@ Thus `r round(coef(fit1)[1], 1)` is the expected price for  the average sized di
 fit3 <- lm(price ~ I(carat * 10), data = diamond)
 coef(fit3)
 ```
+* Proof given above in Interpretaion of coefficients section.
 
 ---
 ## Predicting the price of a diamond
@@ -321,7 +322,7 @@ Without the newdata argument we just get all the predicted Y values for original
 ---
 
 ## Residuals & residual variation
-Residuals represent variation left unexplained by our model. We emphasize the difference between residuals and errors. The errors unobservable true errors from the known coefficients, while residuals are the observable errors from the estimated coefficients. In a sense, the residuals are estimates of the errors.
+Residuals represent variation left unexplained by our model. We emphasize the difference between residuals and errors. **The errors are unobservable true errors from the known coefficients, while residuals are the observable errors from the estimated coefficients.** In a sense, the residuals are estimates of the errors.
 
 
 ```{r VariationInPrice, echo=FALSE, fig.height= 2}
@@ -333,7 +334,8 @@ axis(side=1,seq(210, 1096,50),pos=0)
 ```
 
 
-* Disregarding mass we have all the 'Price' values projected on a line to see a lot of variation. But when mass in considered we have more variation explained by the 'Mass' and we need to worry about variation of Price around each mass. Variation seen in 4 Prices for 0.25 carats from the predicted 'Price'.
+* Disregarding mass we have all the 'Price' values projected on a line to see a lot of variation. But when mass in considered we have more variation explained by the 'Mass' and we need to worry about variation of Price around each mass. 
+* For example look at the variation seen in 4 Prices for 0.25 carats from the predicted 'Price'.
 * This variation around the regression line is **Residual variation**; left unexplained even by accounting for Mass.  
 * The distances from the predicted value to original data points are called residuals.
 
@@ -346,12 +348,8 @@ g
 ```
 
 
-* Residual, the between the observed and predicted outcome
-  $$
-  e_i = Y_i - \hat Y_i
-  $$
+* Residual, the between the observed and predicted outcome $e_i = Y_i - \hat Y_i$
   * The vertical distance between the observed data point and the regression line
-
 * Least squares minimizes $\sum_{i=1}^n e_i^2$
 * The $e_i$ can be thought of as estimates of the $\epsilon_i$.
 
@@ -365,12 +363,12 @@ g
   linear association of the predictor ($X$) removed.
 * One differentiates residual variation (variation after removing
 the predictor) from systematic variation (variation explained by the regression model). 
-  * Eg. Suppose we wanted to analyze diamond prices in a way that it's adjusted for their weight (in this case 'Price'; the predictor var) we can use the residuals from the model fit (price ~ carat). 
+  * Eg. Suppose we wanted to analyze diamond prices in a way that it's adjusted for their weight/carat (**in this case 'Price' is the predictor var & 'Carat' is independent variable to be accounted for**) we can use the residuals from the model fit (price ~ carat). 
 * Residual plots highlight poor model fit.
 
 ---
 
-### calculating residuals
+### Calculating residuals
 
 
 ```{r CalculatingResiduals}
@@ -419,7 +417,7 @@ for (i in 1 : n)
 ```
 ---
 
-* Looking for any pattern (there should be none ideally). And if intercept is included then $ \sum Residuals = 0$ i.e, points should be above and below the 0 line.  
+* Looking for any pattern (there should be none ideally). And if intercept is included then $\sum Residuals = 0$ i.e, points should be above and below the 0 line.  
 * The data is more spread at the regions with lot of data points if it's plotted this way.
 * Non linearity is well visualised using this plot.
 * Heteroskedasticity is captured by this plot only.
@@ -443,26 +441,29 @@ sqrt(Res_Var) # Manually
 ```
 
 ## Summarizing variation
+
+* Proof;  
 $$
 \sum_{i=1}^n (Y_i - \bar Y)^2 = \sum_{i=1}^n (Y_i - \hat Y_i + \hat Y_i - \bar Y)^2  = \sum_{i=1}^n (Y_i - \hat Y_i)^2 + 
 2 \sum_{i=1}^n  (Y_i - \hat Y_i)(\hat Y_i - \bar Y) + 
 \sum_{i=1}^n  (\hat Y_i - \bar Y)^2
 $$
 
+* Therefore, $\sum_{i=1}^n (Y_i - \bar Y)^2 = \sum_{i=1}^n (Y_i - \hat Y_i)^2 + \sum_{i=1}^n  (\hat Y_i - \bar Y)^2$
+
+* Or we can say that, 
+  * **Total Variation = Residual Variation (Unexplained variation) + Regression Variation (Variation explained by regressor)**
+
+* Define the percent of total varation described by the model as $R^2$, 
+$$ 
+R^2 = \frac{\sum_{i=1}^n  (\hat Y_i - \bar Y)^2}{\sum_{i=1}^n (Y_i - \bar Y)^2} = 1 - \frac{\sum_{i=1}^n  (Y_i - \hat Y_i)^2}{\sum_{i=1}^n (Y_i - \bar Y)^2}
+$$
+
+
 ---
-## Summarizing variation
-$\sum_{i=1}^n (Y_i - \bar Y)^2 = \sum_{i=1}^n (Y_i - \hat Y_i)^2 + \sum_{i=1}^n  (\hat Y_i - \bar Y)^2 $
 
-Or 
+## Some facts
 
-Total Variation = Residual Variation (Unexplained variation) + Regression Variation (Variation explained by regressor)
-
-Define the percent of total varation described by the model as
-$$ R^2 = \frac{\sum_{i=1}^n  (\hat Y_i - \bar Y)^2}{\sum_{i=1}^n (Y_i - \bar Y)^2}
-= 1 - \frac{\sum_{i=1}^n  (Y_i - \hat Y_i)^2}{\sum_{i=1}^n (Y_i - \bar Y)^2} $$
-
----
-## Some facts about $R^2$
 * $R^2$ is the percentage of variation explained by the regression model.
 * $0 \leq R^2 \leq 1$
 * $R^2$ is the sample correlation squared.
@@ -475,6 +476,7 @@ $$ R^2 = \frac{\sum_{i=1}^n  (\hat Y_i - \bar Y)^2}{\sum_{i=1}^n (Y_i - \bar Y)^
   * Same linear regression relationship.
 
 ---
+
 ### Anscombe dataset ; Equivalent $R^2$, Mean & Variance between 4 datasets. But the fit is diff.
 
 ```{r, echo = FALSE, fig.height=5, fig.width=5, results='hide'}
@@ -509,8 +511,7 @@ par(op)
     3. Can be used to test $H_0 : \theta = \theta_0$ versus $H_a : \theta >, <, \neq \theta_0$.
     4. Can be used to create a confidence interval for $\theta$ via $\hat \theta \pm Q_{1-\alpha/2} \hat \sigma_{\hat \theta}$
     where $Q_{1-\alpha/2}$ is the relevant quantile from either a normal or T distribution.
-* In the case of regression with iid sampling assumptions and normal errors, our inferences will follow
-very similarily to what you saw in your inference class.
+
 ---
 
 ## Results
@@ -518,27 +519,40 @@ very similarily to what you saw in your inference class.
 * Variance of the intercept : $\sigma_{\hat \beta_0}^2 = Var(\hat \beta_0)  = \left(\frac{1}{n} + \frac{\bar X^2}{\sum_{i=1}^n (X_i - \bar X)^2 }\right)\sigma^2$
 * In practice, $\sigma$ is replaced by its estimate.  
 * It's probably not surprising that under iid Gaussian errors $\frac{\hat \beta_j -  \beta_j}{\hat \sigma_{\hat \beta_j}} $ follows a $t$ distribution with $n-2$ degrees of freedom and a normal distribution for large $n$.
+
 * This can be used to create confidence intervals and perform hypothesis tests.
+
 ---
+
 ```{r Code_Variation_Estimators}
 y <- diamond$price; x <- diamond$carat; n <- length(y)
-beta1 <- cor(y,x) * (sd(y)/sd(x))
-beta0 <- mean(y) - beta1* mean(x)
-e <- y - (beta0 - beta1*x)
-sigma <- sqrt(sum(e^2) / (n-2))
-ssx <- sum((x - mean(x))^2)
+beta1 <- cor(y,x) * (sd(y)/sd(x))   # Slope
+beta0 <- mean(y) - beta1* mean(x)   # Intercept
+e <- y - (beta0 + beta1*x)          # Residuals
+sigma <- sqrt(sum(e^2) / (n-2))     # Residual std. error
+
+ssx <- sum((x - mean(x))^2)  
+
+# Std errors for coefficients
 seBeta0 <- (1 / n + mean(x) ^ 2 / ssx) ^ .5 * sigma 
 seBeta1 <- sigma / sqrt(ssx)
-tBeta0 <- beta0 / seBeta0; tBeta1 <- beta1 / seBeta1
+
+# T statistic
+tBeta0 <- beta0 / seBeta0
+tBeta1 <- beta1 / seBeta1
+
+# P value
 pBeta0 <- 2 * pt(abs(tBeta0), df = n - 2, lower.tail = FALSE)
 pBeta1 <- 2 * pt(abs(tBeta1), df = n - 2, lower.tail = FALSE)
+
+# Final table manually calculated
 coefTable <- rbind(c(beta0, seBeta0, tBeta0, pBeta0), c(beta1, seBeta1, tBeta1, pBeta1))
 colnames(coefTable) <- c("Estimate", "Std. Error", "t value", "P(>|t|)")
 rownames(coefTable) <- c("(Intercept)", "x")
 
 fit <- lm(y ~ x)
-coefTable
-summary(fit)$coefficients
+coefTable # Final table manually calculated
+summary(fit)$coefficients # Final table by lm()
 ```
 ---
 

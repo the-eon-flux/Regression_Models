@@ -14,29 +14,31 @@ library(car)
 
 * The general linear model extends simple linear regression (SLR)
 by adding terms linearly into the model.  
-      $Y_i = \beta_1 X_{1i} + \beta_2 X_{2i} + \ldots + \beta_{p} X_{pi} + \epsilon_{i} = \sum_{k=1}^p X_{ik} \beta_j + \epsilon_{i}$  
+      $Y_i = \beta_1 X_{1i} + \beta_2 X_{2i} + \ldots + \beta_{p} X_{pi} + \epsilon_{i} = \sum_{k=1}^p X_{ik} \beta_k + \epsilon_{i}$  
         
 * Here $X_{1i}=1$ typically, so that an intercept is included.  
 * Least squares (and hence ML estimates under iid Gaussianity 
 of the errors) minimizes  
-$\sum_{i=1}^n \left(Y_i - \sum_{k=1}^p X_{ki} \beta_j\right)^2$
+$\sum_{i=1}^n \left(Y_i - \sum_{k=1}^p X_{ki} \beta_k\right)^2$
 * Note, the important linearity is linearity in the coefficients.
 Thus
 $Y_i =  \beta_1 X_{1i}^2 + \beta_2 X_{2i}^2 + \ldots + \beta_{p} X_{pi}^2 + \epsilon_{i}$ is still a linear model. (We've just squared the elements of the predictor variables.)
 
 ---
+
 ## The general case
 * Least squares solutions have to minimize
 $\sum_{i=1}^n (Y_i - X_{1i}\beta_1 - \ldots - X_{pi}\beta_p)^2$  
 
-* The least squares estimate for the coefficient of a multivariate regression model is exactly regression through the origin with the linear relationships with the other regressors removed from both the regressor and outcome by taking residuals.  
-* In this sense, multivariate regression "adjusts" a coefficient for the linear impact of the other variables.  
+* **The least squares estimate for the coefficient of a multivariate regression model is exactly regression through the origin with the linear relationships with the other regressors removed from both the regressor and outcome by taking residuals.**  
+* In this sense, **multivariate regression "adjusts" a coefficient for the linear impact of the other variables.  **
 
 ---
-## Demonstration that it works using an example
+
+## Demonstration using an example
 ### Linear model with two variables
 
-```{r results='hide'}
+```{r }
 n = 100; x = rnorm(n); x2 = rnorm(n); x3 = rnorm(n)
 y = 1 + x + x2 + x3 + rnorm(n, sd = .1)
 
@@ -49,11 +51,12 @@ coef(lm(ey ~ ex - 1)) # Same value as above
 # 'Regression through the origin (-1 ) with the linear relationships with the other regressors (X2 &X3 here) removed from both the regressor (X1) and outcome (Y) by taking residuals.'
 
 # Again repeating
-coef(lm(y ~ x + x2 + x3)) # Coef of X has value same as when effect of other regressors were removed from Y & X (by taking their residuals) and doing a lm through the origin.
+coef(lm(y ~ x + x2 + x3))[2] # Coef of X has value same as when effect of other regressors were removed from Y & X (by taking their residuals) and doing a lm through the origin.
 
 ```
 
 ---
+
 ## Fitted values, residuals and residual variation
 All of our SLR quantities can be extended to linear models  
 
@@ -63,9 +66,11 @@ All of our SLR quantities can be extended to linear models
 * Variance estimate $\hat \sigma^2 = \frac{1}{n-p} \sum_{i=1}^n e_i ^2$
 * To get predicted responses at new values, $x_1, \ldots, x_p$, simply plug them into the linear model $\sum_{k=1}^p x_{k} \hat \beta_{k}$
 * Coefficients have standard errors, $\hat \sigma_{\hat \beta_k}$, and
-$\frac{\hat \beta_k - \beta_k}{\hat \sigma_{\hat \beta_k}}$
+$$ 
+\frac{\hat \beta_k - \beta_k}{\hat \sigma_{\hat \beta_k}}
+$$
 follows a $T$ distribution with $n-p$ degrees of freedom.
-* Predicted responses have standard errors and we can calculate predicted and expected response intervals.
+* **Predicted responses have standard errors and we can calculate predicted and expected response intervals.**
 
 ---
 
@@ -74,8 +79,8 @@ follows a $T$ distribution with $n-p$ degrees of freedom.
 ### Some background
 
 * In modeling, our interest lies in parsimonious, interpretable representations of the data that enhance our understanding of the phenomena under study.
-* Omitting variables results in bias in the coefficients of interest - unless their regressors are uncorrelated with the omitted ones.
-* On the other hand, including any new variables increases (actual, not estimated) standard errors of other regressors. (So we don't want to idly throw variables into the model. )
+* **Omitting variables results in bias in the coefficients of interest - unless their regressors are uncorrelated with the omitted ones.**
+* **On the other hand, including any new variables increases (actual, not estimated) standard errors of other regressors. (So we don't want to idly throw variables into the model. )**
 * First let us look at the 2nd problem, **Variance Inflation**.
 
 ### 1.) A variance inflation factor (VIF)
@@ -97,8 +102,9 @@ makelms <- function(x1, x2, x3){
 
 * We also have 2 additional functions (rgp1() & rgp2()) for generating those x variables as follows.
 * We can see the differences between these 2 functions as follows :
-      # x1, x2, and x3 are uncorrelated in rgp1()
-      # Also in rgp2(), x3 is heavily correlated to x1 compared to x2.
+
+      * x1, x2, and x3 are uncorrelated in rgp1()
+      * Also in rgp2(), x3 is heavily correlated to x1 compared to x2
 
 ```{r rgp_Fn}
 
@@ -169,11 +175,9 @@ print(rgp2())
 
 * **A variance inflation factor (VIF) is a ratio of estimated variances, the variance due to including the ith regressor, divided by that due to including a corresponding ideal regressor which is uncorrelated with the others.**
 
-* You can also say that VIF describes the increase in the variance of a coefficient of the other correlated regressors.
+* You can also say that **VIF describes the increase in the variance of a coefficient of the other correlated regressors.**
 
-* Let's use the swiss dataset and see that.
-
-* About the data : the Swiss data set consists of a standardized fertility measure and socioeconomic indicators for each of 47 French-speaking provinces of Switzerland in about 1888 when Swiss fertility rates began to fall. 
+* Let's use the swiss dataset and see that. The Swiss data set consists of a standardized fertility measure and socioeconomic indicators for each of 47 French-speaking provinces of Switzerland in about 1888 when Swiss fertility rates began to fall. 
 * Fertility was thought to depend on five socioeconomic factors: 
   # the percent of males working in Agriculture
   # the percent of draftees receiving the highest grade on the army's Examination
@@ -193,7 +197,7 @@ vif(mdl)
 
 * These VIF's show, for each regression coefficient, the variance inflation due to including all the others.
 
-* For instance, the variance estimated in the Education is `2.774943` times what it might have been if Education were not correlated with other regressors.
+* For instance, **the variance estimated in the Education is `2.774943` times what it might have been if Education were not correlated with other regressors.**
 
 * Since Education and score on an Examination are likely to be correlated, we might guess that most of the variance inflation for Education is due to including Examination. Let's test this theory.
 
@@ -212,7 +216,7 @@ vif(mdl2)
 
 * If a regressor is strongly correlated with others, hence will increase their VIF's, we also cannot simply exclude it because excluding it might bias coefficient estimates of regressors with which it is correlated.
 
-* The problems of variance inflation and bias due to excluded regressors both involve correlated regressors. However there are methods, such as factor analysis or principal componenent analysis, which can convert regressors to an equivalent uncorrelated set. Keep in mind that using converted regressors may make interpretation difficult.
+* **The problems of variance inflation and bias due to excluded regressors both involve correlated regressors. However there are methods, such as factor analysis or principal componenent analysis, which can convert regressors to an equivalent uncorrelated set. Keep in mind that using converted regressors may make interpretation difficult.**
 
 ### 2.) Overfitting & underfitting
 
@@ -248,8 +252,9 @@ simbias <- function(seed=8765){
 ```
 
 * We have 2 vars correlated `x1 & x2` and notice the Fn within `simbias()` which simulates `150` y variables and returns the coef of x1 for the 2 models :
-  # lm(y~x1 + x2) `Our correlated variables` &
-  # lm(y ~ x1 + x3) `Uncorrelated variables`
+  
+  * lm(y~x1 + x2) `Our correlated variables` &
+  * lm(y ~ x1 + x3) `Uncorrelated variables`
 
 * As you can see from the `point B` comment the actual coef of `x1` is `1`.
 
@@ -347,27 +352,30 @@ anova(fit1, fit3)
 
 *  An F statistic is a ratio of two sums of squares divided by their respective degrees of freedom. If the two scaled sums are independent and centrally chi-squared distributed with the same variance, the statistic will have an F distribution with parameters given by the two degrees of freedom. In our case, the two sums are residual sums of squares which, as we know, have mean zero hence are centrally chi-squared provided the residuals themselves are normally distributed. The two relevant sums are given in the RSS (Residual Sum of Squares) column of the table.
 
-* R's function, deviance(model), calculates the residual sum of squares (RSS in ANOVA result), also known as the deviance, of the linear model given as its argument.
+* **R's function, `deviance(model)`, calculates the residual sum of squares (RSS in ANOVA result), also known as the deviance, of the linear model given as its argument.**
 
 #### F value (ANOVA) calculation
 
 * Denominator : fit3's residual sum of squares / fit3's degrees of freedom.
-  # Df : subtracting 4, the number of fit3's predictors (the 3 named and the intercept,) from 47
-  # `d <- deviance(fit3)/(47 - 3 - 1)` 
+  
+  * Df : subtracting 4, the number of fit3's predictors (the 3 named and the intercept,) from 47
+  * `d <- deviance(fit3)/(47 - 3 - 1)` 
 
 * Numerator : The numerator is the difference, deviance(fit1)-deviance(fit3), divided by the difference in the residual degrees of freedom of fit1 and fit3, namely 2.
-  # `n <- (deviance(fit1)-deviance(fit3)) / 2`
+  
+  * `n <- (deviance(fit1)-deviance(fit3)) / 2`
 
-* Ratio now `n/d` is your F statistic.
+* Ratio `n/d` is your F statistic.
 
 #### P value calculation
 
 * Probability that a value of `n/d` or larger would be drawn from an F distribution which has parameters 2 and 43. Given by `4.407e-07 in the column labeled Pr(>F)` in ANOVA table.
 
 * `pf(n/d, 2, 43,lower.tail=FALSE)`; Same very small p value, so we are confident that fit3 is significantly better than fit1, with one caveat:
-  # analysis of variance is sensitive to its assumption that model residuals are approximately normal. If they are not, we could get a small p-value for that reason.
-  # The Shapiro-Wilk test is quick and easy in R, Normality is its null hypothesis.
-  # `shapiro.test(fit3$residuals)` Since p-value is large; We accept the H0 hypothesis; supporting confidence in our ANOVA. 
+  
+  * Analysis of variance is sensitive to its assumption that model residuals are approximately normal. If they are not, we could get a small p-value for that reason.
+  * The Shapiro-Wilk test is quick and easy in R, Normality is its null hypothesis.
+  * `shapiro.test(fit3$residuals)` **Since p-value is large; We accept the H0 hypothesis; supporting confidence in our ANOVA.** 
 
 ## Review
 
