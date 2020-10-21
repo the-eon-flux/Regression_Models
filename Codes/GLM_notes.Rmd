@@ -143,10 +143,10 @@ $0=\sum_{i=1}^n \frac{(Y_i - \mu_i)}{\phi \mu_i (1 - \mu_i ) } W_i ~~~\mbox{and}
 * we can't observe p, we can only observe wins, losses, and the associated scores.
 
 ```{r Load_RavensData, cache=TRUE}
+ravensData <- read.csv("../Data/ravensData.csv", header = T)
 
-load("./Data/ravensData.rda")
-head(ravensData)
-boxplot(ravensData) # W & L
+# Boxplot
+boxplot(ravenScore ~ ravenWinNum , ravensData, horizontal = T) # W & L
 ```
 
 * We can see that the Ravens tend to win more when they score more points. In fact, about 3/4 of their losses are at or below a certain score (23) and about 3/4 of their wins are at or above it.
@@ -156,7 +156,7 @@ boxplot(ravensData) # W & L
 * There were 11 games in which the Ravens scored 24 points or more. They won all but one of these.
 
 ```{r echo=FALSE}
-View(t(ravensData))
+ravensData[ order(ravensData$ravenScore),]
 ```
 
 * We see a fairly rapid transition in the Ravens' win/loss record between 23 and 28 points. At **23 points and below they win about half their games**, **between 24 and 28 points they win 3 of 4**, and **above 28 points they win them all**. From this, we get a very crude idea of the correspondence between points scored and the probability of a win.
@@ -171,7 +171,7 @@ View(t(ravensData))
 
 ```{r GLM_Ravens}
 mdl <- glm(ravenWinNum ~ ravenScore, family=binomial, data=ravensData)
-plot(ravenData$ravenScore,mdl$fitted,pch=19,col="blue",xlab="Score",ylab="Prob Ravens Win")
+plot(ravensData$ravenScore,mdl$fitted,pch=19,col="blue",xlab="Score",ylab="Prob Ravens Win")
 ```
 
 #### Results :
@@ -300,20 +300,32 @@ plot(0 : 200, dpois(0 : 200, lambda = 100), type = "h", frame = FALSE)
 
 - In our case : log of $log(\lambda) = b_0 + b_1*{date}$, which implies that the  $\lambda$ (average number of hits per day) is given by $\lambda = exp(b0)*exp(b1)^{date}$
 
-- Exponential growth is also suggested by the smooth, black curve drawn though the data.
+- We'll use Poisson regression to predict $log(\lambda)$ as a linear function of date in a way which maximizes the likelihood of the counts we actually see.
 
-- Thus exp(b1) would represent the percentage by which visits grow per day.
+- Exponential growth is also suggested by the smooth, blue curve drawn though the data.Thus exp(b1) would represent the percentage by which visits grow per day.
 
+```{r LeekData, cache=TRUE}
+gaData <- read.csv("../Leek_Site_Data.csv", header = T)
+gaData$julian <- julian(as.Date(gaData$date))
+plot(gaData$julian,gaData$visits,pch=19,col="darkgrey",xlab="Julian",ylab="Visits")
+glm1 <- glm(gaData$visits ~ gaData$julian,family="poisson")
+lines(gaData$julian,glm1$fitted,col="blue",lwd=3)
 
+```
 
+- Summary shows both coefficients are significant; Residual deviance is also very significantly less than the Null, indicating a strong effect.
 
+```{r}
+summary(glm1)
+```
 
+- Confidence Interval would be :
 
+```{r}
+exp(confint(glm1))
+```
 
-
-
-
-
+- Visits are estimated to increase by a factor of between 1.002192 and 1.002399 per day. That is, between 0.2192% and 0.2399% per day.
 
 
 
