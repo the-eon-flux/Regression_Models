@@ -145,8 +145,14 @@ $0=\sum_{i=1}^n \frac{(Y_i - \mu_i)}{\phi \mu_i (1 - \mu_i ) } W_i ~~~\mbox{and}
 ```{r Load_RavensData, cache=TRUE}
 ravensData <- read.csv("../Data/ravensData.csv", header = T)
 
+<<<<<<< HEAD
 # Boxplot
 boxplot(ravenScore ~ ravenWinNum , ravensData, horizontal = T) # W & L
+=======
+load("./Data/ravensData.rda")
+head(ravensData)
+boxplot( ravenScore ~ ravenWin, ravensData, horizontal = T ) # W & L
+>>>>>>> bb2aa94c5e1b499f0ee694ca4d0d36d62f6f6cd0
 ```
 
 * We can see that the Ravens tend to win more when they score more points. In fact, about 3/4 of their losses are at or below a certain score (23) and about 3/4 of their wins are at or above it.
