@@ -352,4 +352,3 @@ exp(confint(glm1))
 - Visits are estimated to increase by a factor of between 1.002192 and 1.002399 per day. That is, between 0.2192% and 0.2399% per day.
 
 
-

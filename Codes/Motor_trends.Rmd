@@ -13,42 +13,110 @@ knitr::opts_chunk$set(echo = TRUE)
 *'Motor Trend's'* magazine report for  the better choices of transmission system for cars.
 
 ### Summary :
-The transmission allows the vehicle to change gears, thereby transferring power from the engine to the drive axle in the most efficient way possible. But whilst everyone agrees that a transmission is vital to the inner workings of any car, there is no general consensus regarding what kind of transmission is better—automatic or manual. In this study we investigated this hot topic by looking at the fuel efficiency between the 2 transmission systems (Automatic & Manual) and the result is not suprising.
+The transmission allows the vehicle to change gears, thereby transferring power from the engine to the drive axle in the most efficient way possible. But whilst everyone agrees that a transmission is vital to the inner workings of any car, there is no general consensus regarding what kind of transmission is better—automatic or manual. In this study we investigated this hot topic by looking at the fuel efficiency between the 2 transmission systems (Automatic & Manual) and the result is not suprising. We show that `Manual` system cars do give better mileage relative to `Automatic` system. 
 
 ```{r mtcars, cache=TRUE, echo=FALSE, warning=FALSE}
 data("mtcars")
-mtcars$Tm <- sapply(mtcars$am, function(t){ if(t==1){return("Manual")}else(return("Automatic"))})
+mtcars$am <- factor(mtcars$am, labels = c("Automatic", "Manual"))
 ```
 
-## Looking at the data
+### Looking at the data
 
 * The famous `mtcars` dataset comprises of fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
 
 ```{r Exp_DA, echo=FALSE, warning=FALSE, fig.height=2.5, fig.width=6.5}
 library(ggplot2)
-g <- ggplot(mtcars, aes(y=mpg)) + geom_boxplot(aes(color = Tm)) + facet_grid(. ~ Tm)
+g <- ggplot(mtcars, aes(y=mpg)) + geom_boxplot(aes(color = am)) + facet_grid(. ~ am)
 g <- g + labs(title = "MPG V/S Transmission system data") + 
             labs(y = "MPG (Miles Per Gallon)")
 g
 ```
 
-```{r }
-TS <- c("Transmission","Manual", "Automatic")
-M <- c(mean(mtcars[mtcars$am==1,1]), mean(mtcars[mtcars$am==0,1]))
-Sd <- c(sd(mtcars[mtcars$am==1,1]), sd(mtcars[mtcars$am==0,1]))
+```{r echo=FALSE, warning=FALSE}
+TS <- c("Manual", "Automatic")
+M <- c(mean(mtcars[mtcars$am=="Automatic",1]), mean(mtcars[mtcars$am=="Manual",1]))
+Sd <- c(sd(mtcars[mtcars$am=="Automatic",1]), sd(mtcars[mtcars$am=="Manual",1]))
 Df <- rbind(M,Sd)
 row.names(Df) <- c("Mean", "Standard Deviation")
 colnames(Df) <- TS
 Df
 ```
 
-Did the student fit multiple models and detail their strategy for model selection?
-Did the student answer the questions of interest or detail why the question(s) is (are) not answerable?
-Did the student do a residual plot and some diagnostics?
-Did the student quantify the uncertainty in their conclusions and/or perform an inference correctly?
-Was the report brief (about 2 pages long) for the main body of the report and no longer than 5 with supporting appendix of figures?
-Did the report include an executive summary?
-Was the report done in Rmd (knitr)?
+* Looking at the Boxplot for `'mpg'` against the '`Transmission System`' we can say that overall the `Manual system` has higher fuel efficiency.
+      
+      * More than `75%` of `Manual cars` have `> 20 MPG` average
+      * At the same time `75%` of `Automatic transmission cars` are below that `20 MPG`
+
+* The `mean` of manual system (`r Df[1,1]`) compared to the `mean` of automatic system (`r Df[1,2]`) also says the same thing.  
+
+* MPG has min value `10.40` & maximum at `33.90`. Thus we can use a linear model to fit.
+
+### Validation using a linear model fit
+
+* First let's fit a linear model without the intercept i.e, `mpg ~ am - 1`. That will give us the actual estimates for each factor level in `Transmission`.
+
+```{r Fit_W/o_Intercept}
+fit1 <- lm(mpg ~ factor(am)-1, mtcars)
+summary(fit1)$coef
+```
+
+* As you can see from the above coefficients estimates, the `Manual` transmission does have an **higher estimate for `MPG` at `r summary(fit1)$coef[2,1]`**, with standard error (`r summary(fit1)$coef[2,2]`) and p value `< 0.001`.
+
+* We can include an intercept to compare the significant difference of Manual V/S Automatic transmission system
+
+```{r fit_with_Intercept}
+fit2 <- lm(mpg ~ factor(am), mtcars)
+summary(fit2)$coef
+```
+
+* From the above coefficient table we can see that the factor level **'Automatic'** is taken as reference and hence we get the same coefficient as above, 
+      `r summary(fit2)$coef[1,1]`.
+
+* Thus the point here is the second coefficient which would be `Intercept + Coefficient Manual`, around `r summary(fit2)$coef[2,1]` more than the intercept with a significance of '***' (p < 0.001).
+
+* A lousy quantification would be just to take a ratio of coefficients to say that `MPG in Manual systems` is this much higher than `Automatic systems`; which is what we have done in the next point.
+
+* We can say that the Manual transmission system has around 
+      `r (summary(fit2)$coef[2,1]/(summary(fit2)$coef[1,1] ))*100`% more fuel efficiency than Automatic systems with p value `r summary(fit2)$coef[2,4]`.
+
+### Residuals and some diagnostics
+
+* We will see if the residuals are normally distributed for our p value to be actually true.
+
+```{r Diagnostics, fig.height= 3, fig.width=3, echo=FALSE}
+## Plot 1
+# Residuals Plot
+Fitted_Values <- fitted(fit1)
+Residuals <- resid(fit1)
+Transmission <- factor(fitted(fit1), labels = c("Automatic", "Manual"))
+Df <- data.frame(cbind(Fitted_Values, Residuals, Transmission))
+Df$Transmission <- factor(Df$Transmission, labels = c("Automatic", "Manual"))
+
+# Plot
+g <- ggplot(data = Df, aes(x = as.factor(Transmission), y = Residuals)) + geom_point(size = 2.5, color= "dodgerblue") + labs(title = "Residuals v/s Transmission") + labs(x= "Transmission", y = "Residuals")
+g
+
+```
+
+* Residuals seem to properly distributed around `0` for both the factors. But the variance is high for `Manual` transmission.
+
+* We can work with it for now as that's not a trend in the residuals. We can confirm our findings once we are certain that the residuals are normally distributed. We can do a simple test of Normality with `Shapiro-Wilk test`
+
+* **The null hypothesis $H_0$, is that 'It's normally distributed'.**
+
+```{r Normality_Test}
+shapiro.test(fit1$residuals)
+```
+
+* Since the p value is more than 0.05, we have to accept the $H_0$ hypothesis and conclude that the **residuals are normally distributed.**
+
+### Results
+
+* We have shown how `Manual system` cars are more fuel efficient than `Automatic system` cars with a `p value < 0.001`
+
+* We pseudo-quantified the difference between the 2 systems using the `fit2` model `mpg ~ factor(am)` i.e, including the intercept. We saw that coefficient of Manual system was almost `~40%` more than the other one.
+
+* We have to keep in mind that this data is from few decades back. Things might be different now. 
 
 
 
