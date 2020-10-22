@@ -1,0 +1,54 @@
+---
+title: "Manual or Automatic Transmission : Which is better for you ??"
+author: "Tejus"
+output: pdf_document
+geometry: "left=2cm,right=1.5cm,top=1cm,bottom=1.5cm"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Subject :
+*'Motor Trend's'* magazine report for  the better choices of transmission system for cars.
+
+### Summary :
+The transmission allows the vehicle to change gears, thereby transferring power from the engine to the drive axle in the most efficient way possible. But whilst everyone agrees that a transmission is vital to the inner workings of any car, there is no general consensus regarding what kind of transmission is better—automatic or manual. In this study we investigated this hot topic by looking at the fuel efficiency between the 2 transmission systems (Automatic & Manual) and the result is not suprising.
+
+```{r mtcars, cache=TRUE, echo=FALSE, warning=FALSE}
+data("mtcars")
+mtcars$Tm <- sapply(mtcars$am, function(t){ if(t==1){return("Manual")}else(return("Automatic"))})
+```
+
+## Looking at the data
+
+* The famous `mtcars` dataset comprises of fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+
+```{r Exp_DA, echo=FALSE, warning=FALSE, fig.height=2.5, fig.width=6.5}
+library(ggplot2)
+g <- ggplot(mtcars, aes(y=mpg)) + geom_boxplot(aes(color = Tm)) + facet_grid(. ~ Tm)
+g <- g + labs(title = "MPG V/S Transmission system data") + 
+            labs(y = "MPG (Miles Per Gallon)")
+g
+```
+
+```{r }
+TS <- c("Transmission","Manual", "Automatic")
+M <- c(mean(mtcars[mtcars$am==1,1]), mean(mtcars[mtcars$am==0,1]))
+Sd <- c(sd(mtcars[mtcars$am==1,1]), sd(mtcars[mtcars$am==0,1]))
+Df <- rbind(M,Sd)
+row.names(Df) <- c("Mean", "Standard Deviation")
+colnames(Df) <- TS
+Df
+```
+
+Did the student fit multiple models and detail their strategy for model selection?
+Did the student answer the questions of interest or detail why the question(s) is (are) not answerable?
+Did the student do a residual plot and some diagnostics?
+Did the student quantify the uncertainty in their conclusions and/or perform an inference correctly?
+Was the report brief (about 2 pages long) for the main body of the report and no longer than 5 with supporting appendix of figures?
+Did the report include an executive summary?
+Was the report done in Rmd (knitr)?
+
+
+
