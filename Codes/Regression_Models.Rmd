@@ -600,8 +600,46 @@ So, $R^2$ is literally $r$ squared.
 
 ---
 
+## Introducing spline terms for better fit
+
+```{r echo=FALSE}
+plot(mtcars$disp, mtcars$qsec, pch = 16, xlab = "Displacement", ylab = "qsec (1/4 mile time)" )
+# Linear fit
+abline(lm(qsec ~ disp, mtcars), lwd= 2, col="red")
+```
+
+* Consider this plot, linear fit doesn't actually capture the whole essence of this relationship. 
+
+* We can see 2 clear break points; 
+  
+  * One around `r mean(mtcars$disp)` &
+  * One around `r mean(mtcars$disp) + sd(mtcars$disp)`
+  
+* We can break our regression line at these points using a knot term.
+
+* Consider the model 
+$$
+Y_i = \beta_0 + \beta_1 X_i + \sum_{k=1}^d (x_i - \xi_k)_+ \gamma_k + \epsilon_{i}
+$$
+where $(a)_+ = a$ if $a > 0$ and $0$ otherwise and $\xi_1 \leq ... \leq \xi_d$ are known knot points.
+
+```{r Knots}
+
+knots <- c(mean(mtcars$disp), sd(mtcars$disp))
+splineTerms <- sapply(knots, function(knot){ifelse(mtcars$disp - knot > 0, mtcars$disp - knot, 0) })
+
+xMat <- cbind(Intercept = 1, Displacement = mtcars$disp, splineTerms )
+colnames(xMat) <- c( "Intercept", "Displacement", "Knot1", "Knot2")
+
+fit2 <- lm(mtcars$qsec ~ xMat - 1)
+yhat <- predict(fit2)
+
+plot(mtcars$disp, mtcars$qsec, pch = 16, xlab = "Displacement", ylab = "qsec (1/4 mile time)" )
+lines(mtcars$disp, yhat, lwd = 2, col = "dodgerblue")
+abline(lm(qsec ~ disp, mtcars), lwd= 2, col="red")
 
 
+```
 
 
 
