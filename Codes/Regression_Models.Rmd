@@ -625,8 +625,11 @@ where $(a)_+ = a$ if $a > 0$ and $0$ otherwise and $\xi_1 \leq ... \leq \xi_d$ a
 
 ```{r Knots}
 
-knots <- c(mean(mtcars$disp), sd(mtcars$disp))
-splineTerms <- sapply(knots, function(knot){ifelse(mtcars$disp - knot > 0, mtcars$disp - knot, 0) })
+knots <- c(mean(mtcars$disp), mean(mtcars$disp)+sd(mtcars$disp))
+
+splineTerms <- sapply(knots, function(knot){ (mtcars$disp > knot)* (mtcars$disp - knot) })
+
+splineTerms1 <- sapply(knots, function(knot){ifelse(mtcars$disp - knot > 0, mtcars$disp - knot, 0) })
 
 xMat <- cbind(Intercept = 1, Displacement = mtcars$disp, splineTerms )
 colnames(xMat) <- c( "Intercept", "Displacement", "Knot1", "Knot2")
@@ -635,8 +638,11 @@ fit2 <- lm(mtcars$qsec ~ xMat - 1)
 yhat <- predict(fit2)
 
 plot(mtcars$disp, mtcars$qsec, pch = 16, xlab = "Displacement", ylab = "qsec (1/4 mile time)" )
-lines(mtcars$disp, yhat, lwd = 2, col = "dodgerblue")
+lines(mtcars$disp[1:2], yhat[1:2], lwd = 2, col = "dodgerblue")
+
+
 abline(lm(qsec ~ disp, mtcars), lwd= 2, col="red")
+
 
 
 ```
